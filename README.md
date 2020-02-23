@@ -7,7 +7,7 @@ These scripts support Debian(Raspbian)/Ubuntu only.
 Setups up a Raspberry Pi with the Ubiquiti Unifi Controller and Pi-hole.
 
 ## unifi_ssl_import.sh
-Imports SSL certificates (including Let's Encrypt) into the UniFi Controller.
+Imports a SSL certificate (including Let's Encrypt) for use by the UniFi Controller.
 
 Requirements:
 1. You'll need to already have a valid 2048-bit private key, SSL certificate, and Certificate Authority chain file. The Controller UI will not work with a 4096-bit certificate.
@@ -19,4 +19,10 @@ Even though this script attempts to be clever and careful in how it backs up you
 
 ## install_pihole_ssl.sh
 
-Coming soon...
+Install your SSL for Pi-hole (and basically any other site you host under /var/www/html/ on port 443).
+
+## install_cloudflared.sh
+
+Setup your Pi-hole to use Cloudflare as a proxy for DNS-over-HTTPS. 
+
+Note: This one is for the armhf (i.e. not ARMv6) architecture found in  Raspberry Pi 3 and higher, and systemd only!
