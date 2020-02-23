@@ -1,38 +1,21 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# unifi_ssl_import.sh
 # UniFi Controller SSL Certificate Import Script for Unix/Linux Systems
-# by Steve Jenkins <http://www.stevejenkins.com/>
-# Part of https://github.com/stevejenkins/ubnt-linux-utils/
-# Incorporates ideas from https://source.sosdg.org/brielle/lets-encrypt-scripts
-# Version 2.8
-# Last Updated Jan 13, 2017
 
-# REQUIREMENTS
-# 1) Assumes you have a UniFi Controller installed and running on your system.
-# 2) Assumes you already have a valid 2048-bit private key, signed certificate, and certificate authority
-#    chain file. The Controller UI will not work with a 4096-bit certificate. See http://wp.me/p1iGgP-2wU
-#    for detailed instructions on how to generate those files and use them with this script.
-
-# KEYSTORE BACKUP
-# Even though this script attempts to be clever and careful in how it backs up your existing keystore,
-# it's never a bad idea to manually back up your keystore (located at $UNIFI_DIR/data/keystore on RedHat
-# systems or /$UNIFI_DIR/keystore on Debian/Ubunty systems) to a separate directory before running this
-# script. If anything goes wrong, you can restore from your backup, restart the UniFi Controller service,
-# and be back online immediately.
+# Orginally put together by Steve Jenkins (https://github.com/stevejenkins/ubnt-linux-utils/)
+# Updated by David Fuentes (https://github.com/dfuentes87/)
+# Version 2.9
 
 # CONFIGURATION OPTIONS
 UNIFI_HOSTNAME=hostname.example.com
 UNIFI_SERVICE=unifi
 
-# Uncomment following three lines for Fedora/RedHat/CentOS
+# Uncomment following two lines for Fedora/RedHat/CentOS
 UNIFI_DIR=/opt/UniFi
-JAVA_DIR=${UNIFI_DIR}
 KEYSTORE=${UNIFI_DIR}/data/keystore
 
-# Uncomment following three lines for Debian/Ubuntu
+# Uncomment following two lines for Debian/Ubuntu
 #UNIFI_DIR=/var/lib/unifi
-#JAVA_DIR=/usr/lib/unifi
 #KEYSTORE=${UNIFI_DIR}/keystore
 
 # Uncomment following three lines for CloudKey
@@ -41,8 +24,8 @@ KEYSTORE=${UNIFI_DIR}/data/keystore
 #KEYSTORE=${JAVA_DIR}/data/keystore
 
 # FOR LET'S ENCRYPT SSL CERTIFICATES ONLY
-# Generate your Let's Encrtypt key & cert with certbot before running this script
-LE_MODE=no
+# Generate your Let's Encrypt key & cert with certbot before running this script
+LE_MODE=false #'true' or 'false'
 LE_LIVE_DIR=/etc/letsencrypt/live
 
 # THE FOLLOWING OPTIONS NOT REQUIRED IF LE_MODE IS ENABLED
@@ -59,14 +42,11 @@ PASSWORD=aircontrolenterprise
 printf "\nStarting UniFi Controller SSL Import...\n"
 
 # Check to see whether Let's Encrypt Mode (LE_MODE) is enabled
-
-if [[ ${LE_MODE} == "YES" || ${LE_MODE} == "yes" || ${LE_MODE} == "Y" || ${LE_MODE} == "y" || ${LE_MODE} == "TRUE" || ${LE_MODE} == "true" || ${LE_MODE} == "ENABLED" || ${LE_MODE} == "enabled" || ${LE_MODE} == 1 ]] ; then
-	LE_MODE=true
+if [[ ${LE_MODE} == "true" ]]; then
 	printf "\nRunning in Let's Encrypt Mode...\n"
 	PRIV_KEY=${LE_LIVE_DIR}/${UNIFI_HOSTNAME}/privkey.pem
 	CHAIN_FILE=${LE_LIVE_DIR}/${UNIFI_HOSTNAME}/fullchain.pem
 else
-	LE_MODE=false
 	printf "\nRunning in Standard Mode...\n"
 fi
 
@@ -102,12 +82,9 @@ printf "\nStopping UniFi Controller...\n"
 service "${UNIFI_SERVICE}" stop
 
 if [[ ${LE_MODE} == "true" ]]; then
-	
 	# Write a new MD5 checksum based on the updated certificate	
 	printf "\nUpdating certificate MD5 checksum...\n"
-
 	md5sum "${PRIV_KEY}" > "${LE_LIVE_DIR}/${UNIFI_HOSTNAME}/privkey.pem.md5"
-	
 fi
 
 # Create double-safe keystore backup
@@ -126,18 +103,18 @@ printf "\nExporting SSL certificate and key data into temporary PKCS12 file...\n
 
 #If there is a signed crt we should include this in the export
 if [[ -f ${SIGNED_CRT} ]]; then
-    openssl pkcs12 -export \
-    -in "${CHAIN_FILE}" \
-    -in "${SIGNED_CRT}" \
-    -inkey "${PRIV_KEY}" \
-    -out "${P12_TEMP}" -passout pass:"${PASSWORD}" \
-    -name "${ALIAS}"
+  openssl pkcs12 -export \
+  -in "${CHAIN_FILE}" \
+  -in "${SIGNED_CRT}" \
+  -inkey "${PRIV_KEY}" \
+  -out "${P12_TEMP}" -passout pass:"${PASSWORD}" \
+  -name "${ALIAS}"
 else
-    openssl pkcs12 -export \
-    -in "${CHAIN_FILE}" \
-    -inkey "${PRIV_KEY}" \
-    -out "${P12_TEMP}" -passout pass:"${PASSWORD}" \
-    -name "${ALIAS}"
+  openssl pkcs12 -export \
+  -in "${CHAIN_FILE}" \
+  -inkey "${PRIV_KEY}" \
+  -out "${P12_TEMP}" -passout pass:"${PASSWORD}" \
+  -name "${ALIAS}"
 fi
 	
 # Delete the previous certificate data from keystore to avoid "already exists" message
@@ -159,7 +136,7 @@ printf "\nRemoving temporary files...\n"
 rm -f "${P12_TEMP}"
 	
 # Restart the UniFi Controller to pick up the updated keystore
-printf "\nRestarting UniFi Controller to apply new Let's Encrypt SSL certificate...\n"
+printf "\nRestarting UniFi Controller to apply new SSL certificate...\n"
 service "${UNIFI_SERVICE}" start
 
 # That's all, folks!
