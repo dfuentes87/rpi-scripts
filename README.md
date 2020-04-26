@@ -25,4 +25,4 @@ Install your SSL for Pi-hole (and basically any other site you host under /var/w
 
 Setup your Pi-hole to use Cloudflare as a proxy for DNS-over-HTTPS. 
 
-Note: This one is for the armhf (i.e. not ARMv6) architecture found in  Raspberry Pi 3 and higher, and systemd only!
+Note: This one is for the armhf (i.e. not ARMv6) architecture found in Raspberry Pi 3 and higher, and systemd only!

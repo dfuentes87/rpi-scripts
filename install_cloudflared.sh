@@ -50,3 +50,4 @@ echo -e "Don't forget to set your Upstream DNS Servers in Pi-Hole (use # instead
 semicolons to signify ports):
 \nFor IPv4 = 127.0.0.1#5053 \
 \nFor IPv6 = ::1#5053"
+
