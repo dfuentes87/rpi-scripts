@@ -35,3 +35,4 @@ if [[ -z "$1" ]] ; then
   echo -e "${color}\n\nOne more step is changing the password for the web interface of the Pi-hole.\n\n${nocolor}"
   pihole -a -p
 fi
+

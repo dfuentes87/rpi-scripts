@@ -1,7 +1,8 @@
 #!/bin/bash
 
 ### Install a SSL Certificate for Pi-hole on a Raspberry Pi ###
-# Created by David Fuentes (https://github.com/dfuentes87/)
+# Most steps are from this post: https://discourse.pi-hole.net/t/enabling-https-for-your-pi-hole-web-interface/5771
+# Script put together by David Fuentes (https://github.com/dfuentes87/)
 
 # Pi-hole hostname
 pi_hostname=subdomain.mypihole.com
@@ -39,10 +40,11 @@ echo "
 }" | tee /etc/lighttpd/external.conf &>/dev/null #cant > with sudo
 
 # enable the SSL module
-lighty-enable-mod ssl
+lighty-enable-mod ssl 2>/dev/null
 # remove extra stuff from the symlinked file
 sed -i '/socket/,$d' /etc/lighttpd/conf-enabled/10-ssl.conf
 
 service lighttpd restart
 
 echo "Done!"
+
