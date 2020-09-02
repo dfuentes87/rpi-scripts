@@ -8,8 +8,8 @@ red=$(tput setaf 1)
 nocolor=$(tput sgr0)
 
 if ! [ $(id -u) = 0 ]; then
-	printf "${red}This script must be run with sudo or as root.${nocolor}"
-	exit 1
+  printf "${red}This script must be run with sudo or as root.${nocolor}"
+  exit 1
 fi
 
 if ! [ $(getenforce) = Disabled ]; then
@@ -40,34 +40,32 @@ if [ "$answer" = "yes" ]; then
     exit 1
   fi
 
- # Below I'm sending the Unbound install details to /dev/null because the package starts Unbound immediately
- # after it's done, but then fails because port 53 is already in use by Pi-hole
+  # Below I'm sending the Unbound install details to /dev/null because the package starts Unbound immediately
+  # after it's done, but then fails because port 53 is already in use by Pi-hole
   printf "${green}\n\nNow installing and configuring Unbound..\n${nocolor}"
   if command -v apt; then
     apt install unbound -y > /dev/null 2>&1
     systemctl stop unbound
 
     # get the configuration file for Unbound to work with Pi-hole
-    #wget -O /etc/unbound/unbound.conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
-    mv pi-hole.conf /etc/unbound/unbound.conf.d/
+    wget -O /etc/unbound/unbound.conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
   else
     yum install unbound -y > /dev/null 2>&1
     systemctl stop unbound
 
     # get the configuration file for Unbound to work with Pi-hole
-    #wget -O /etc/unbound/conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
-    mv pi-hole.conf /etc/unbound/conf.d/
+    wget -O /etc/unbound/conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
   fi
 
-	# Set Pi-hole DNS to localhost via Unbound port for IPv4
-	sed -i 's/PIHOLE_DNS_1=.*$/PIHOLE_DNS_1=127.0.0.1#5335/' "/etc/pihole/setupVars.conf"
+  # Set Pi-hole DNS to localhost via Unbound port for IPv4
+  sed -i 's/PIHOLE_DNS_1=.*$/PIHOLE_DNS_1=127.0.0.1#5335/' "/etc/pihole/setupVars.conf"
 
-	printf "
+  printf "
   Do you want Unbound to resolve IPv6 addresses? Only enable this if your ISP issued you a IPv6 and your network uses it,
   otherwise Unbound will not work properly and you'll have to manually disable IPv6 in Unbound's Pi-hole config file!\n"
   read -rp "  ['yes' or 'no']: " network
-	if [ "$network" = "yes" ]; then
-	  # Change the Unbound Pi-hole config file to also use IPv6
+  if [ "$network" = "yes" ]; then
+    # Change the Unbound Pi-hole config file to also use IPv6
     if command -v apt; then
       sed -i 's/do-ip6: no/do-ip6: yes/;s/prefer-ip6: no/prefer-ip6: yes/' /etc/unbound/unbound.conf.d/pi-hole.conf
     else
@@ -78,26 +76,26 @@ if [ "$answer" = "yes" ]; then
   else
     # Since we are only using IPv4, remove the 2nd DNS setting
     sed -i '/PIHOLE_DNS_2=.*$/d' "/etc/pihole/setupVars.conf"
-	fi
+  fi
 
   systemctl start unbound
 
   printf "${green}\nVerifying Unbound is working..${nocolor}\n"
-	# Some variables for testing DNS lookups
-	servfail=$(dig +time=2 +tries=2 sigfail.verteiltesysteme.net @127.0.0.1 -p 5335 | grep -o SERVFAIL)
-	noerror=$(dig +time=2 +tries=2 sigok.verteiltesysteme.net @127.0.0.1 -p 5335 | grep -o NOERROR)
+  # Some variables for testing DNS lookups
+  servfail=$(dig +time=2 +tries=2 sigfail.verteiltesysteme.net @127.0.0.1 -p 5335 | grep -o SERVFAIL)
+  noerror=$(dig +time=2 +tries=2 sigok.verteiltesysteme.net @127.0.0.1 -p 5335 | grep -o NOERROR)
 
-	if [ "$servfail" = "SERVFAIL" ]; then
-		printf "${green}\nFirst DNS test completed successfully.\n${nocolor}"
-	else
-		printf "${red}\nFirst DNS query returned an unexpected result.\n${nocolor}"
-	fi
+  if [ "$servfail" = "SERVFAIL" ]; then
+    printf "${green}\nFirst DNS test completed successfully.\n${nocolor}"
+  else
+    printf "${red}\nFirst DNS query returned an unexpected result.\n${nocolor}"
+  fi
 
-	if [ "$noerror" = "NOERROR" ]; then
-		printf "${green}Second DNS test completed successfully.\n${nocolor}"
-	else
-		printf "${red}Second DNS query returned an unexpected result.\n${nocolor}"
-	fi
+  if [ "$noerror" = "NOERROR" ]; then
+    printf "${green}Second DNS test completed successfully.\n${nocolor}"
+  else
+    printf "${red}Second DNS query returned an unexpected result.\n${nocolor}"
+  fi
 
   printf "\nFinal step, set a strong password for the Pi-hole web interface.\n"
   pihole -a -p
