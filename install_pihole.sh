@@ -40,8 +40,8 @@ if [ "$answer" = "yes" ]; then
     exit 1
   fi
 
- # Below I'm sending the Unbound install details to /dev/null because the package starts Unbound immediately
- # after it's done, but then fails because port 53 is already in use by Pi-hole
+  # Below I'm sending the Unbound install details to /dev/null because the package starts Unbound immediately
+  # after it's done, but then fails because port 53 is already in use by Pi-hole
   printf "${green}\n\nNow installing and configuring Unbound..\n${nocolor}"
   if command -v apt; then
     apt install unbound -y > /dev/null 2>&1
