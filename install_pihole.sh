@@ -12,10 +12,12 @@ if ! [ $(id -u) = 0 ]; then
   exit 1
 fi
 
-if ! [ $(getenforce) = Disabled ]; then
-  sestatus | head -1
-  printf "${red}Pi-hole does not support SELinux! Aborting..${nocolor}\n"
-  exit 1
+if command -v yum >/dev/null 2>&1; then
+  if ! [ $(getenforce 2>/dev/null) = Disabled ]; then
+    sestatus | head -1
+    printf "${red}Pi-hole does not support SELinux! Aborting..${nocolor}\n"
+    exit 1
+  fi
 fi
 
 printf "${green}This script is going to fully update all system packages, install Pi-hole, \
@@ -24,7 +26,7 @@ read -rp "Proceed? ['yes' or 'no']: " answer
 
 if [ "$answer" = "yes" ]; then
   printf "${green}\nUpdating all system packages and installing required packages..\n\n${nocolor}"
-  if command -v apt; then
+  if command -v apt >/dev/null 2>&1; then
     apt update -y; apt upgrade -y; apt autoremove -y; apt autoclean -y
     apt install curl wget dnsutils git -y
   else
@@ -43,18 +45,18 @@ if [ "$answer" = "yes" ]; then
   # Below I'm sending the Unbound install details to /dev/null because the package starts Unbound immediately
   # after it's done, but then fails because port 53 is already in use by Pi-hole
   printf "${green}\n\nNow installing and configuring Unbound..\n${nocolor}"
-  if command -v apt; then
+  if command -v apt >/dev/null 2>&1; then
     apt install unbound -y > /dev/null 2>&1
     systemctl stop unbound
 
     # get the configuration file for Unbound to work with Pi-hole
-    wget -O /etc/unbound/unbound.conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
+    wget -q -O /etc/unbound/unbound.conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
   else
     yum install unbound -y > /dev/null 2>&1
     systemctl stop unbound
 
     # get the configuration file for Unbound to work with Pi-hole
-    wget -O /etc/unbound/conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
+    wget -q -O /etc/unbound/conf.d/pi-hole.conf https://raw.githubusercontent.com/dfuentes87/rpi_scripts/master/unbound-pihole.conf
   fi
 
   # Set Pi-hole DNS to localhost via Unbound port for IPv4
@@ -66,7 +68,7 @@ if [ "$answer" = "yes" ]; then
   read -rp "  ['yes' or 'no']: " network
   if [ "$network" = "yes" ]; then
     # Change the Unbound Pi-hole config file to also use IPv6
-    if command -v apt; then
+    if command -v apt >/dev/null 2>&1; then
       sed -i 's/do-ip6: no/do-ip6: yes/;s/prefer-ip6: no/prefer-ip6: yes/' /etc/unbound/unbound.conf.d/pi-hole.conf
     else
       sed -i 's/do-ip6: no/do-ip6: yes/;s/prefer-ip6: no/prefer-ip6: yes/' /etc/unbound/conf.d/pi-hole.conf
