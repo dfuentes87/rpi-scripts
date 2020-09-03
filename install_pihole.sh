@@ -12,10 +12,12 @@ if ! [ $(id -u) = 0 ]; then
   exit 1
 fi
 
-if ! [ $(getenforce) = Disabled ]; then
-  sestatus | head -1
-  printf "${red}Pi-hole does not support SELinux! Aborting..${nocolor}\n"
-  exit 1
+if command -v yum; then
+  if ! [ $(getenforce) = Disabled ]; then
+    sestatus | head -1
+    printf "${red}Pi-hole does not support SELinux! Aborting..${nocolor}\n"
+    exit 1
+  fi
 fi
 
 printf "${green}This script is going to fully update all system packages, install Pi-hole, \
